@@ -1,0 +1,18 @@
+{
+  "entryPoints": [
+    "lib/**/*.ts",
+    "app/**/*.tsx",
+    "components/**/*.tsx",
+    "types/**/*.ts"
+  ],
+  "entryPointStrategy": "expand",
+  "out": "docs",
+  "excludePrivate": true,
+  "excludeExternals": true,
+  "theme": "default",
+  "categorizeByGroup": true,
+  "categoryOrder": ["Types", "Auth", "API", "Components", "Utils"],
+  "includeVersion": true,
+  "readme": "README.md",
+  "tsconfig": "tsconfig.json"
+}

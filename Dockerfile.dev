@@ -1,0 +1,32 @@
+FROM node:20-alpine
+
+# Install Python and other build dependencies
+RUN apk add --no-cache python3 make g++ gcc libc6-compat curl
+
+WORKDIR /app
+
+# Copy package files and Prisma schema
+COPY package.json package-lock.json ./
+COPY prisma ./prisma/
+
+# Install dependencies
+RUN npm install
+
+# Copy environment files first
+# .env.local is optional (for NextAuth secret) - create it with: npx auth secret
+# Copy all .env files (will include .env.local if it exists)
+COPY .env* ./
+
+# Copy the rest of the application
+COPY . .
+
+# Generate Prisma Client
+RUN npx prisma generate
+
+EXPOSE 3000
+
+# Initialize database and start the application
+CMD sh -c '\
+  sh scripts/init-db.sh && \
+  NODE_ENV=development npm run dev' 
+ 

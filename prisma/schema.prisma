@@ -1,0 +1,385 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["driverAdapters"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+/// Categories for products (e.g., Electronics, Furniture, Books)
+/// @model Category
+/// @property {string} id - Unique identifier for the category
+/// @property {string} name - Category name (must be unique)
+/// @property {string?} description - Optional category description
+/// @property {Date} createdAt - When the category was created
+/// @property {Date} updatedAt - When the category was last updated
+/// @property {Product[]} products - Products belonging to this category
+model Category {
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name        String    @unique
+  description String?
+  createdAt   DateTime  @default(now()) @db.Timestamp(6)
+  updatedAt   DateTime  @updatedAt
+  products    Product[]
+}
+
+/// Status options for product assignments (e.g., Open, In Progress, Completed)
+/// @model ProductAssignmentStatus
+/// @property {string} id - Unique identifier for the status
+/// @property {string} name - Status name (must be unique)
+/// @property {string?} description - Optional status description
+/// @property {string?} color - Color code for UI display
+/// @property {number} order - Display order in UI
+/// @property {Date} createdAt - When the status was created
+/// @property {Date} updatedAt - When the status was last updated
+/// @property {ProductAssignment[]} assignments - Assignments with this status
+model ProductAssignmentStatus {
+  id          String              @id @db.Uuid
+  name        String              @unique
+  description String?
+  color       String              @default("#808080")
+  order       Int                 @default(1)
+  createdAt   DateTime            @default(now()) @db.Timestamp(6)
+  updatedAt   DateTime            @updatedAt @db.Timestamp(6)
+  assignments ProductAssignment[]
+}
+
+/// Product model representing items for sale
+/// @model Product
+/// @property {string} id - Unique identifier for the product
+/// @property {string} name - Product name
+/// @property {string} categoryId - ID of the category this product belongs to
+/// @property {string[]} images - Array of image URLs
+/// @property {string} description - Detailed product description
+/// @property {Decimal} price - Base price for the product
+/// @property {Date} createdAt - When the product was created
+/// @property {string?} createdById - ID of the user who created the product
+/// @property {User?} createdBy - Reference to the user who created the product
+/// @property {Category} category - The category this product belongs to
+/// @property {ProductAssignment[]} assignments - Instances of this product assigned to sellers
+/// @property {InvoiceItem[]} invoiceItems - Line items in invoices for this product
+/// @property {Conversation[]} conversations - Conversations related to this product
+/// @property {boolean} isArchived - Indicates if the product is archived
+/// @property {Date?} archivedAt - When the product was archived
+model Product {
+  id            String              @id @default(uuid()) @db.Uuid
+  name          String
+  categoryId    String              @db.Uuid
+  images        String[]
+  description   String?
+  price         Decimal             @db.Decimal(12, 2)
+  createdAt     DateTime            @default(now()) @db.Timestamp(6)
+  createdById   String              @db.Uuid
+  archivedAt    DateTime?           @db.Timestamp(6)
+  isArchived    Boolean             @default(false)
+  updatedAt     DateTime?           @updatedAt @db.Timestamp(6)
+  conversations Conversation[]
+  invoiceItems  InvoiceItem[]
+  category      Category            @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  createdBy     User                @relation("UserProducts", fields: [createdById], references: [id], onDelete: Cascade)
+  assignments   ProductAssignment[]
+
+  @@index([createdById])
+  @@index([categoryId])
+}
+
+/// Assignment of products to sellers by clients
+/// @model ProductAssignment
+/// @property {string} id - Unique identifier for the assignment
+/// @property {string} productId - ID of the product being assigned
+/// @property {string} clientId - ID of the user requesting the product
+/// @property {string} sellerId - ID of the user selling the product
+/// @property {string} statusId - ID of the current assignment status
+/// @property {ProductAssignmentStatus} status - Current status of the assignment
+/// @property {Date} createdAt - When the assignment was created
+/// @property {Date?} completedAt - When the product transaction was completed
+/// @property {Product} product - The product being assigned
+/// @property {User} client - The user requesting the product
+/// @property {User} seller - The user selling the product
+/// @property {Review[]} reviews - Reviews tied to this assignment
+/// @property {InvoiceItem[]} invoiceItems - Invoice items for this assignment
+model ProductAssignment {
+  id           String                  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  productId    String                  @db.Uuid
+  clientId     String                  @db.Uuid
+  sellerId     String                  @db.Uuid
+  statusId     String                  @db.Uuid
+  createdAt    DateTime                @default(now()) @db.Timestamp(6)
+  completedAt  DateTime?               @db.Timestamp(6)
+  invoiceItems InvoiceItem[]
+  reviews      Review[]
+  client       User                    @relation("ClientAssignments", fields: [clientId], references: [id])
+  seller       User                    @relation("SellerAssignments", fields: [sellerId], references: [id])
+  status       ProductAssignmentStatus @relation(fields: [statusId], references: [id])
+  product      Product                 @relation(fields: [productId], references: [id], onDelete: Cascade)
+}
+
+/// Types of reviews (e.g., Client Review, Seller Review)
+/// @model ReviewType
+/// @property {string} id - Unique identifier for the review type
+/// @property {string} name - Review type name (must be unique)
+/// @property {string?} description - Optional review type description
+/// @property {Date} createdAt - When the review type was created
+/// @property {Date} updatedAt - When the review type was last updated
+/// @property {Review[]} reviews - Reviews of this type
+model ReviewType {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name        String   @unique
+  description String?
+  createdAt   DateTime @default(now()) @db.Timestamp(6)
+  updatedAt   DateTime @updatedAt
+  reviews     Review[]
+}
+
+/// Reviews left by users for products/sellers
+/// @model Review
+/// @property {string} id - Unique identifier for the review
+/// @property {string} assignmentId - ID of the product assignment being reviewed
+/// @property {string} reviewerId - ID of the user leaving the review
+/// @property {string} revieweeId - ID of the user being reviewed
+/// @property {number} rating - Numerical rating (typically 1-5)
+/// @property {string} title - Review title
+/// @property {string} description - Detailed review content
+/// @property {Date} createdAt - When the review was created
+/// @property {ProductAssignment} assignment - The product assignment being reviewed
+/// @property {User} reviewer - The user leaving the review
+/// @property {User} reviewee - The user being reviewed
+/// @property {string} typeId - ID of the review type
+/// @property {ReviewType} reviewType - Type of review
+model Review {
+  id           String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  assignmentId String            @db.Uuid
+  reviewerId   String            @db.Uuid
+  revieweeId   String            @db.Uuid
+  rating       Int
+  title        String
+  description  String
+  createdAt    DateTime          @default(now()) @db.Timestamp(6)
+  typeId       String            @db.Uuid
+  assignment   ProductAssignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  reviewee     User              @relation("ReviewsReceived", fields: [revieweeId], references: [id])
+  reviewer     User              @relation("ReviewsGiven", fields: [reviewerId], references: [id])
+  reviewType   ReviewType        @relation(fields: [typeId], references: [id])
+}
+
+/// User model - central to the application
+/// @model User
+/// @property {string} id - Unique identifier for the user
+/// @property {string} name - User's display name (defaults to "NO_NAME")
+/// @property {string?} fullName - Complete name including first/last
+/// @property {string} email - User's email address (must be unique)
+/// @property {Date?} emailVerified - When the email was verified
+/// @property {string?} image - Profile image URL
+/// @property {string?} password - Hashed password for credential login
+/// @property {string} role - User role (user, admin, seller, client)
+/// @property {Json?} address - Structured address data
+/// @property {string?} phoneNumber - User's phone number
+/// @property {string?} companyId - Seller legal ID number
+/// @property {string?} paymentMethod - Default payment method
+/// @property {Date} createdAt - When the user was created
+/// @property {Date} updatedAt - When the user was last updated
+/// @property {number} numReviews - Total reviews received
+/// @property {Decimal} clientRating - Average rating as client
+/// @property {Decimal} sellerRating - Average rating as seller
+model User {
+  id                String                    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name              String                    @default("NO_NAME")
+  email             String                    @unique(map: "user_email_idx")
+  emailVerified     DateTime?                 @db.Timestamp(6)
+  image             String?
+  password          String?
+  role              String                    @default("user")
+  address           Json?                     @db.Json
+  paymentMethod     String?
+  createdAt         DateTime                  @default(now()) @db.Timestamp(6)
+  updatedAt         DateTime                  @updatedAt
+  numReviews        Int                       @default(0)
+  clientRating      Decimal                   @default(0) @db.Decimal(3, 2)
+  sellerRating      Decimal                   @default(0) @db.Decimal(3, 2)
+  companyId         String?
+  fullName          String?
+  phoneNumber       String?
+  account           Account[]
+  Cart              Cart[]
+  conversations     ConversationParticipant[]
+  clientInvoices    Invoice[]                 @relation("ClientInvoices")
+  sellerInvoices    Invoice[]                 @relation("SellerInvoices")
+  messages          Message[]
+  payments          Payment[]
+  passwordResets    PasswordReset[]
+  reviewsReceived   Review[]                  @relation("ReviewsReceived")
+  reviewsGiven      Review[]                  @relation("ReviewsGiven")
+  session           Session[]
+  products          Product[]                 @relation("UserProducts")
+  clientAssignments ProductAssignment[]       @relation("ClientAssignments")
+  sellerAssignments ProductAssignment[]       @relation("SellerAssignments")
+}
+
+model Account {
+  userId            String   @db.Uuid
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  createdAt         DateTime @default(now()) @db.Timestamp(6)
+  updatedAt         DateTime @updatedAt
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([provider, providerAccountId])
+}
+
+model Session {
+  sessionToken String   @id
+  userId       String   @db.Uuid
+  expires      DateTime @db.Timestamp(6)
+  createdAt    DateTime @default(now()) @db.Timestamp(6)
+  updatedAt    DateTime @updatedAt
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String
+  expires    DateTime
+
+  @@id([identifier, token])
+}
+
+/// Password reset tokens for handling forgotten passwords
+/// @model PasswordReset
+/// @property {string} id - Unique identifier for the password reset record
+/// @property {string} userId - ID of the user requesting the password reset
+/// @property {string} token - Unique token for verification
+/// @property {Date} expiresAt - When the token expires
+/// @property {boolean} changeOnFirstLogin - Whether user should change password on first login
+/// @property {Date} createdAt - When the reset request was created
+/// @property {User} user - User who requested the password reset
+model PasswordReset {
+  id                 String   @id @default(uuid()) @db.Uuid
+  userId             String   @db.Uuid
+  token              String   @unique
+  expiresAt          DateTime @db.Timestamp(6)
+  changeOnFirstLogin Boolean  @default(false)
+  createdAt          DateTime @default(now()) @db.Timestamp(6)
+  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+/// Email verification tokens for new user registrations
+/// @model EmailVerification
+/// @property {string} id - Unique identifier for the verification record
+/// @property {string} email - Email address to verify
+/// @property {string} name - User's name (to create account after verification)
+/// @property {string} token - Unique token for verification
+/// @property {string} password - Hashed password (stored temporarily until verification)
+/// @property {Date} expiresAt - When the token expires
+/// @property {Date} createdAt - When the verification request was created
+model EmailVerification {
+  id        String   @id @default(uuid()) @db.Uuid
+  email     String   @unique
+  name      String
+  token     String   @unique
+  password  String
+  expiresAt DateTime @db.Timestamp(6)
+  createdAt DateTime @default(now()) @db.Timestamp(6)
+}
+
+model Cart {
+  id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId        String?   @db.Uuid
+  sessionCartId String
+  totalPrice    Decimal   @db.Decimal(12, 2)
+  createdAt     DateTime  @default(now()) @db.Timestamp(6)
+  user          User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  invoices      Invoice[] @relation("CartInvoices")
+}
+
+model Payment {
+  id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId        String    @db.Uuid
+  amount        Decimal   @db.Decimal(12, 2)
+  paymentMethod String
+  paymentResult Json      @db.Json
+  isPaid        Boolean   @default(false)
+  paidAt        DateTime? @db.Timestamp(6)
+  createdAt     DateTime  @default(now()) @db.Timestamp(6)
+  emailSent     Boolean   @default(false)
+  emailSentAt   DateTime? @db.Timestamp(6)
+  invoices      Invoice[]
+  user          User      @relation(fields: [userId], references: [id])
+}
+
+model Invoice {
+  id            String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  invoiceNumber String        @unique
+  sellerId      String        @db.Uuid
+  clientId      String        @db.Uuid
+  totalPrice    Decimal       @db.Decimal(12, 2)
+  paymentId     String?       @db.Uuid
+  createdAt     DateTime      @default(now()) @db.Timestamp(6)
+  cartId        String?       @db.Uuid
+  cart          Cart?         @relation("CartInvoices", fields: [cartId], references: [id])
+  client        User          @relation("ClientInvoices", fields: [clientId], references: [id])
+  seller        User          @relation("SellerInvoices", fields: [sellerId], references: [id])
+  payment       Payment?      @relation(fields: [paymentId], references: [id])
+  items         InvoiceItem[]
+}
+
+model InvoiceItem {
+  id           String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  invoiceId    String            @db.Uuid
+  productId    String            @db.Uuid
+  qty          Int
+  price        Decimal           @db.Decimal(12, 2)
+  name         String
+  hours        Int
+  assignmentId String            @db.Uuid
+  assignment   ProductAssignment @relation(fields: [assignmentId], references: [id])
+  invoice      Invoice           @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  product      Product           @relation(fields: [productId], references: [id])
+}
+
+model Conversation {
+  id           String                    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  createdAt    DateTime                  @default(now()) @db.Timestamp(6)
+  updatedAt    DateTime                  @updatedAt @db.Timestamp(6)
+  productId    String?                   @db.Uuid
+  product      Product?                  @relation(fields: [productId], references: [id])
+  participants ConversationParticipant[]
+  messages     Message[]
+}
+
+model ConversationParticipant {
+  id             String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId         String       @db.Uuid
+  conversationId String       @db.Uuid
+  joinedAt       DateTime     @default(now()) @db.Timestamp(6)
+  conversation   Conversation @relation(fields: [conversationId], references: [id])
+  user           User         @relation(fields: [userId], references: [id])
+
+  @@unique([userId, conversationId])
+}
+
+model Message {
+  id              String       @id @default(uuid()) @db.Uuid
+  conversationId  String       @db.Uuid
+  senderId        String       @db.Uuid
+  content         String
+  createdAt       DateTime     @default(now()) @db.Timestamp(6)
+  readAt          DateTime?    @db.Timestamp(6)
+  imageUrl        String?
+  isSystemMessage Boolean      @default(false)
+  metadata        Json?
+  conversation    Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender          User         @relation(fields: [senderId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId])
+  @@index([senderId])
+}

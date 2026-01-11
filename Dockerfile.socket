@@ -1,0 +1,30 @@
+FROM node:20.11.1-alpine
+
+WORKDIR /app
+
+# Install build dependencies
+RUN apk add --no-cache python3 make g++ gcc curl wget
+
+# Copy package files
+COPY socket/package*.json ./
+
+# Install dependencies
+RUN npm install
+
+# Copy socket server code
+COPY socket-server.js ./
+
+# Copy environment files
+# .env.local is optional (for NextAuth secret) - create it with: npx auth secret
+# Copy all .env files (will include .env.local if it exists)
+COPY .env* ./
+
+# Expose socket port
+EXPOSE 3001
+
+# Add healthcheck
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD wget --no-verbose --tries=1 --spider http://localhost:3001/socket-health || exit 1
+
+# Start the socket server with proper error handling
+CMD ["sh", "-c", "node socket-server.js || exit 1"] 

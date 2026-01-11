@@ -1,0 +1,28 @@
+{
+  /* 
+   * TypeScript configuration for the database seeding scripts.
+   * This configuration is separate from the main project's tsconfig.json to allow
+   * the database scripts to use ESM modules while having their own specific settings.
+   * 
+   * Purpose:
+   * - Enables TypeScript compilation for database scripts
+   * - Configures ESM module support for modern JS features
+   * - Sets appropriate strictness and compatibility options
+   */
+  "compilerOptions": {
+    /* JavaScript Language Features */
+    "target": "es2016",          // Compile to ECMAScript 2016 (ES7) for good compatibility
+
+    /* Module Settings */
+    "module": "ESNext",          // Use ECMAScript modules (import/export) - required for seed.mjs
+    "moduleResolution": "Node",  // Use Node.js style module resolution
+
+    /* Interoperability Settings */
+    "esModuleInterop": true,     // Enables cleaner imports from non-ESM packages (like CommonJS)
+    
+    /* Code Quality & Consistency */
+    "forceConsistentCasingInFileNames": true,  // Enforce consistent casing in file names (important for cross-platform)
+    "strict": true,              // Enable all strict type-checking options for better code quality
+    "skipLibCheck": true         // Skip type checking of declaration files for faster builds
+  }
+} 
