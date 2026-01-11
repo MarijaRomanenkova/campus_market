@@ -186,18 +186,6 @@ jobs:
           NEXTAUTH_URL: http://localhost:3000
           CI: true
 
-      - name: Publish Playwright Test Results
-        uses: dorny/test-reporter@v1
-        if: always()
-        with:
-          name: Playwright Test Results
-          path: test-results/playwright-junit.xml
-          reporter: java-junit
-          list-suites: all
-          list-tests: all
-          max-annotations: 50
-          fail-on-error: false
-
       - name: Upload Playwright report
         if: always()
         uses: actions/upload-artifact@v4
