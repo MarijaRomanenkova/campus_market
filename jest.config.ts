@@ -15,6 +15,7 @@ const config: Config = {
   testPathIgnorePatterns: [
     '/node_modules/', 
     '/.next/',
+    '/tests/e2e/', // Exclude E2E tests (run with Playwright)
     // Comment these out to enable all tests
     // '/tests/components/InvoiceForm.test.tsx',
     // '/tests/form-validation.test.tsx',

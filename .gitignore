@@ -8,6 +8,8 @@
 
 # testing
 /coverage
+/test-results
+/playwright-report
 
 # next.js
 /.next/
@@ -50,3 +52,8 @@ next-env.d.ts
 # Docker
 .docker/
 docker-compose.override.yml
+
+# Test Analysis
+TEST_ANALYSIS.md
+TESTING_CASE_STUDY_PLAN.md
+MINIMUM_TESTING_PLAN.md

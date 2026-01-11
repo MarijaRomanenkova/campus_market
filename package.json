@@ -14,6 +14,9 @@
     "test:watch": "jest --watch",
     "test:all": "jest --testPathIgnorePatterns=tests/email/",
     "test:components": "jest tests/components/",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:headed": "playwright test --headed",
     "test:invoice": "jest invoice-creation.test.ts invoice-calculation.test.ts payment-status-updates.test.ts stripe.test.ts components/InvoiceForm.test.tsx paypal.test.ts",
     "test:email-reset": "ts-node tests/email/password-reset.test.ts",
     "test:email-verification": "ts-node tests/email/email-verification.test.ts",
@@ -85,6 +88,7 @@
   },
   "devDependencies": {
     "@jest/globals": "^29.7.0",
+    "@playwright/test": "^1.57.0",
     "@prisma/client": "^6.0.1",
     "@testing-library/dom": "^10.4.0",
     "@testing-library/jest-dom": "^6.6.3",
