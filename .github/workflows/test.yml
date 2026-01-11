@@ -192,7 +192,6 @@ jobs:
         with:
           name: Playwright Test Results
           path: test-results/playwright-junit.xml
-          reporter: junit
           list-suites: all
           list-tests: all
           max-annotations: 50
