@@ -7,10 +7,32 @@ on:
     branches: [main, develop]
 
 jobs:
+  # Linting
+  lint:
+    name: Lint Code
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run ESLint
+        run: npm run lint
+
   # Unit and Integration Tests
   unit-integration-tests:
     name: Unit & Integration Tests
     runs-on: ubuntu-latest
+    needs: lint
     
     services:
       postgres:
@@ -55,12 +77,33 @@ jobs:
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/campus_market_test
 
-      - name: Run unit and integration tests
-        run: npm test
+      - name: Run unit and integration tests with coverage
+        run: npm test -- --coverage --coverageReporters=text --coverageReporters=lcov --coverageReporters=json-summary
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/campus_market_test
           NEXTAUTH_SECRET: test-secret-key-for-ci
           NEXTAUTH_URL: http://localhost:3000
+
+      - name: Publish Test Results
+        uses: dorny/test-reporter@v1
+        if: always()
+        with:
+          name: Jest Test Results
+          path: test-results/jest-junit.xml
+          reporter: jest-junit
+          list-suites: all
+          list-tests: all
+          max-annotations: 50
+          fail-on-error: false
+
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v4
+        if: always()
+        with:
+          files: ./coverage/lcov.info
+          flags: unit,integration
+          name: codecov-umbrella
+          fail_ci_if_error: false
 
       - name: Upload test results
         if: always()
@@ -75,6 +118,7 @@ jobs:
     name: E2E Tests
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    needs: lint
 
     services:
       postgres:
@@ -136,6 +180,18 @@ jobs:
           NEXTAUTH_SECRET: test-secret-key-for-ci
           NEXTAUTH_URL: http://localhost:3000
           CI: true
+
+      - name: Publish Playwright Test Results
+        uses: dorny/test-reporter@v1
+        if: always()
+        with:
+          name: Playwright Test Results
+          path: test-results/playwright-junit.xml
+          reporter: playwright-junit
+          list-suites: all
+          list-tests: all
+          max-annotations: 50
+          fail-on-error: false
 
       - name: Upload Playwright report
         if: always()

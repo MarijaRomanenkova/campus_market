@@ -1,6 +1,6 @@
 # Campmar - Campus Marketplace
 
-A Next.js-based marketplace platform that connects students on campus to trade their second-hand items. Built with modern web technologies including Next.js 15, Prisma, PostgreSQL, Socket.io, and payment integrations.
+A Next.js-based marketplace platform that connects students on campus to trade their second-hand items. Built with modern web technologies including Next.js 15, Prisma, PostgreSQL, Socket.io, and payment integrations. This platform includes automated testing with CI/CD integration.
 
 ## 🚀 Quick Start
 
