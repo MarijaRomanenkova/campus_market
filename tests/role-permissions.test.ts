@@ -35,7 +35,7 @@ jest.mock('@/db/prisma', () => ({
   },
 }));
 
-jest.mock('@/lib/actions/chat.actions', () => ({
+jest.mock('@/lib/actions/conversation.actions', () => ({
   getOrCreateConversation: jest.fn(),
 }));
 

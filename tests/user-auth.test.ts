@@ -323,7 +323,7 @@ describe('User Authentication', () => {
         const session = await auth();
         
         // Assert
-        expect(session?.user.role).toBe('CONTRACTOR');
+        expect(session?.user.role).toBe('SELLER');
       });
       
       it('should require auth and not redirect for authenticated client', async () => {
@@ -347,7 +347,7 @@ describe('User Authentication', () => {
         
         // Assert
         expect(redirect).not.toHaveBeenCalled();
-        expect(session?.user.role).toBe('CONTRACTOR');
+        expect(session?.user.role).toBe('SELLER');
       });
       
       it('should redirect unauthenticated users to sign-in page', async () => {

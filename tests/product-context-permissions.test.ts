@@ -35,7 +35,7 @@ jest.mock('@/db/prisma', () => ({
   },
 }));
 
-jest.mock('@/lib/actions/chat.actions', () => ({
+jest.mock('@/lib/actions/conversation.actions', () => ({
   getOrCreateConversation: jest.fn(),
 }));
 
@@ -281,7 +281,7 @@ describe('Context-Based Permissions', () => {
         joinedAt: new Date()
       }));
       
-      (getOrCreateConversation as jest.Mock).mockImplementation(async (currentUserId, productId, clientId, contractorId) => {
+      (getOrCreateConversation as jest.Mock).mockImplementation(async (currentUserId, productId, clientId, sellerId) => {
         const session = await auth();
         if (!session?.user?.id) {
           return { success: false, message: 'Unauthorized' };
@@ -401,7 +401,7 @@ describe('Context-Based Permissions', () => {
       const productId = 'product-456';
       const productCreatorId = userB.id; // Same as current user
       
-      (getOrCreateConversation as jest.Mock).mockImplementation(async (currentUserId, productId, clientId, contractorId) => {
+      (getOrCreateConversation as jest.Mock).mockImplementation(async (currentUserId, productId, clientId, sellerId) => {
         const session = await auth();
         if (!session?.user?.id) {
           return { success: false, message: 'Unauthorized' };
@@ -495,7 +495,7 @@ describe('Context-Based Permissions', () => {
         updatedAt: new Date()
       });
       
-      (getOrCreateConversation as jest.Mock).mockImplementation(async (currentUserId, productId, clientId, contractorId) => {
+      (getOrCreateConversation as jest.Mock).mockImplementation(async (currentUserId, productId, clientId, sellerId) => {
         const session = await auth();
         if (!session?.user?.id) {
           return { success: false, message: 'Unauthorized' };
@@ -587,7 +587,7 @@ describe('Context-Based Permissions', () => {
       const productId = 'product-123';
       const productCreatorId = userA.id;
       
-      (getOrCreateConversation as jest.Mock).mockImplementation(async (currentUserId, productId, clientId, contractorId) => {
+      (getOrCreateConversation as jest.Mock).mockImplementation(async (currentUserId, productId, clientId, sellerId) => {
         const session = await auth();
         if (!session?.user?.id) {
           return { success: false, message: 'Unauthorized' };
