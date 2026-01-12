@@ -53,7 +53,6 @@ next-env.d.ts
 .docker/
 docker-compose.override.yml
 
-# Test Analysis
-TEST_ANALYSIS.md
-TESTING_CASE_STUDY_PLAN.md
-MINIMUM_TESTING_PLAN.md
+# Markdown files (except README.md)
+*.md
+!README.md

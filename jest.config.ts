@@ -38,6 +38,22 @@ const config: Config = {
       useESM: true,
     },
   },
+  // Configure reporters for test result tracking
+  reporters: [
+    'default',
+    [
+      'jest-junit',
+      {
+        outputDirectory: 'test-results',
+        outputName: 'jest-junit.xml',
+        suiteName: 'Jest Tests',
+        classNameTemplate: '{classname}',
+        titleTemplate: '{title}',
+        ancestorSeparator: ' › ',
+        usePathForSuiteName: 'true',
+      },
+    ],
+  ],
 };
 
 // Create the final configuration with Next.js
